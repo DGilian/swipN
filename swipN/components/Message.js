@@ -19,8 +19,8 @@ class Message extends PureComponent {
 
   toggleFavorite(id) {
     // Définition de notre action ici
-    const action = { type: "TOGGLE_FAVORITE", value: id}
-    this.props.dispatch(action)
+    // const action = { type: "TOGGLE_FAVORITE", value: id}
+    // this.props.dispatch(action)
 
     // a suppr
     // this.setState(prevState => ({ isFavorite: !prevState.isFavorite }))

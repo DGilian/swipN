@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { View, StyleSheet, Text, TextInput, Button, AsyncStorage } from 'react-native';
+import { View, StyleSheet, Text, TextInput, Button } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { withFirebase } from 'react-redux-firebase';
 import { compose } from 'recompose';
@@ -39,7 +39,7 @@ class Login extends PureComponent {
   register = () => {
     firebase.createUser(
       { email: this.state.email , password: this.state.password},
-      { username: this.state.username, email: this.state.email},
+      { username: this.state.username, email: this.state.email, avatar: 'https://firebasestor...8-b92e-0027b312ff38'},
     ).then((e)=> {
       this.setState({
         email: '',
@@ -82,6 +82,7 @@ class Login extends PureComponent {
                     onSubmitEditing={() => console.log('onSubmit')}
                     placeholderTextColor="#fff"
                     autoCapitalize={word='none'}
+                    secureTextEntry={true}
                   />
                 </View>
                 <View style={styles.signIn}>

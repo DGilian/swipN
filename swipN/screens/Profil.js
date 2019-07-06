@@ -1,5 +1,7 @@
 import React, { PureComponent } from 'react';
-import { View, StyleSheet, Text, Image, SafeAreaView, FlatList, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, Image, SafeAreaView, FlatList, ScrollView, ActivityIndicator,
+  TouchableOpacity, Button,
+} from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import color from '../constants/colors';
@@ -9,9 +11,59 @@ import Message from '../components/Message';
 import joinFavoriteMessageUser from '../data/joinFavoriteMessageUser';
 import joinMyMessageUser from '../data/joinMyMessageUser';
 
-export default class Profil extends PureComponent {
+import { withFirebase, isEmpty } from 'react-redux-firebase';
+import { compose } from 'recompose';
+import { connect } from 'react-redux';
+
+// picture
+import * as Permissions from 'expo-permissions';
+import * as ImagePicker from 'expo-image-picker';
+
+class Profil extends PureComponent {
+  state = {
+    isLoading: true,
+    imgPathUser: '',
+  }
+
+  componentDidMount() {
+    const { firebase } = this.props
+    const image = firebase.storage().ref().child('appSwipe/avatar.jpg');
+    image.getDownloadURL().then((url) => {
+      this.setState({
+        imgPathUser: url,
+        isLoading: false,
+      })
+    })
+    .catch((e)=> {
+      console.log(e)
+    });
+  }
+  
+  onEditProfil = async () => {
+    console.log('onEdit profil')
+    const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    if (status !== 'granted') {
+      Alert.alert('Sorry, we need camera roll permissions to make this work!');
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+    });
+  }
+
   render() {
-    const { navigation } = this.props;
+    const { navigation, profile } = this.props;
+    let userName = profile.username !== '' ? profile.username : 'username'
+   
+
+    if (this.state.isLoading) {
+      return (
+        <View style={styles.waiting}>
+          <ActivityIndicator />
+        </View>
+      );
+    }
+
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
         <ScrollView style={styles.container}>
@@ -19,13 +71,24 @@ export default class Profil extends PureComponent {
             colors={['#243857', '#151930']}
             start={[0.5, 0.25]}
             end={[0.46, 0.93]}
-            style={styles.header}
+            style={styles.headerBackground}
           >
-            <Image
-              source={{ uri: user[3].userPic }}
-              style={styles.contentImage}
-            />
-            <Text style={styles.userName}>UserName</Text>
+            <View style={styles.headerContainer}>
+              <View style={styles.profilContainer}>
+                <Image
+                  source={{ uri: this.state.imgPathUser }}
+                  style={styles.contentImage}
+                />
+                <Text style={styles.userName}>{userName}</Text>
+              </ View>
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={this.onEditProfil}
+                underlayColor='#fff'
+              >
+                 <Text style={styles.editText}>...</Text>
+              </TouchableOpacity>
+            </ View>
           </LinearGradient>
 
           <View>
@@ -52,15 +115,33 @@ export default class Profil extends PureComponent {
   }
 }
 
+const enhance = compose(
+  withFirebase,
+  connect((state) => ({
+      profile: state.firebase.profile
+  })),
+);
+
+export default enhance(Profil);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: color.backgroundColor,
   },
-  header: {
-    justifyContent: 'space-between',
+  headerBackground: {
+    paddingTop: 30,
+    paddingBottom: 30,
+  },
+  headerContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 40,
+    paddingLeft: 10,
+  },
+  profilContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   contentImage: {
     height: 100,
@@ -71,6 +152,26 @@ const styles = StyleSheet.create({
     color: 'white',
     padding: 20,
   },
+  waiting: {
+    flex: 1,
+    padding: 20,
+    justifyContent: 'center',
+  },
+  editButton:{
+    paddingTop:3,
+    paddingBottom:8,
+    backgroundColor:'#fff',
+    borderRadius:10,
+    borderWidth: 1,
+    borderColor: '#fff',
+    marginRight: 20,
+  },
+  editText:{
+      color:'black',
+      textAlign:'center',
+      paddingLeft : 10,
+      paddingRight : 10
+  }
   // buttonMenu: {
   //   width: `${100}%`,
   //   display: 'flex',

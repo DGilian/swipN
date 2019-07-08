@@ -1,11 +1,12 @@
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import { View, StyleSheet, Text, TextInput, Button } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { withFirebase } from 'react-redux-firebase';
+import { withFirebase, isEmpty } from 'react-redux-firebase';
 import { compose } from 'recompose';
-import firebase from 'firebase'
+import { connect } from 'react-redux';
+import PropTypes from 'prop-types';
 
-class Login extends PureComponent {
+class Login extends Component {
 
   constructor() {
     super()
@@ -18,7 +19,14 @@ class Login extends PureComponent {
     }
   }
 
+  componentWillReceiveProps({auth, navigation}) {
+    if (!isEmpty(auth)) {
+      navigation.navigate('App');
+    }
+  }
+
   onSignIn = () => {
+    const { firebase } = this.props
     firebase.login({
       email: this.state.email,
       password: this.state.password
@@ -37,6 +45,7 @@ class Login extends PureComponent {
   }
 
   register = () => {
+    const { firebase } = this.props
     firebase.createUser(
       { email: this.state.email , password: this.state.password},
       { username: this.state.username, email: this.state.email, avatar: 'https://firebasestor...8-b92e-0027b312ff38'},
@@ -54,6 +63,7 @@ class Login extends PureComponent {
   }
 
   render() {
+    // console.log(this.props.firebase)
     return (
       <LinearGradient
         style={styles.containerAll}
@@ -174,9 +184,28 @@ class Login extends PureComponent {
 
 const enhance = compose(
   withFirebase,
+  connect(state => (
+    {
+    auth: state.firebase.auth,
+  })),
 );
 
 export default enhance(Login);
+
+
+Login.propTypes = {
+  navigation: PropTypes.shape({
+    navigate: PropTypes.func,
+  }),
+  auth: PropTypes.objectOf(PropTypes.string),
+};
+
+Login.defaultProps = {
+  navigation: {
+    navigate: () => {},
+  },
+  auth: {},
+};
 
 const styles = StyleSheet.create({
   containerAll: {

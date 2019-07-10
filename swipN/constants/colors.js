@@ -12,4 +12,5 @@ export default {
   pictureNewPostIcon: 'white',
   sendButton: 'blue',
   tabBar: 'white',
+  button: 'white',
 };

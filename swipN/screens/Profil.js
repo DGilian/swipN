@@ -40,7 +40,6 @@ class Profil extends PureComponent {
   }
   
   onEditProfil = async () => {
-    console.log('onEdit profil')
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
     if (status !== 'granted') {
       Alert.alert('Sorry, we need camera roll permissions to make this work!');
@@ -51,10 +50,16 @@ class Profil extends PureComponent {
     });
   }
 
+  logout = () => {
+    console.log('log out')
+    const { firebase, navigation } = this.props
+    firebase.logout()
+    navigation.navigate('AuthLoading');
+  }
+
   render() {
     const { navigation, profile } = this.props;
     let userName = profile.username !== '' ? profile.username : 'username'
-   
 
     if (this.state.isLoading) {
       return (
@@ -86,7 +91,14 @@ class Profil extends PureComponent {
                 onPress={this.onEditProfil}
                 underlayColor='#fff'
               >
-                 <Text style={styles.editText}>...</Text>
+                <Text style={styles.editText}>...</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.logoutButton}
+                onPress={this.logout}
+                underlayColor='#fff'
+              >
+                <MaterialCommunityIcons name="logout-variant" size={24} color={color.button}/>
               </TouchableOpacity>
             </ View>
           </LinearGradient>
@@ -165,6 +177,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#fff',
     marginRight: 20,
+  },
+  logoutButton:{
+    marginRight: 10,
   },
   editText:{
       color:'black',

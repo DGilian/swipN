@@ -19,12 +19,6 @@ class Login extends Component {
     }
   }
 
-  componentWillReceiveProps({auth, navigation}) {
-    if (!isEmpty(auth)) {
-      navigation.navigate('App');
-    }
-  }
-
   onSignIn = () => {
     const { firebase } = this.props
     firebase.login({
@@ -55,7 +49,7 @@ class Login extends Component {
         password: '',
         username: '',
       })
-      this.props.navigation.navigate('AuthLoading');
+      this.props.navigation.navigate('App');
     })
     .catch((error) => {
       this.setState({ errorMessage: error.message})
@@ -63,7 +57,6 @@ class Login extends Component {
   }
 
   render() {
-    // console.log(this.props.firebase)
     return (
       <LinearGradient
         style={styles.containerAll}
@@ -184,28 +177,10 @@ class Login extends Component {
 
 const enhance = compose(
   withFirebase,
-  connect(state => (
-    {
-    auth: state.firebase.auth,
-  })),
 );
 
 export default enhance(Login);
 
-
-Login.propTypes = {
-  navigation: PropTypes.shape({
-    navigate: PropTypes.func,
-  }),
-  auth: PropTypes.objectOf(PropTypes.string),
-};
-
-Login.defaultProps = {
-  navigation: {
-    navigate: () => {},
-  },
-  auth: {},
-};
 
 const styles = StyleSheet.create({
   containerAll: {

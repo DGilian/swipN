@@ -1,34 +1,28 @@
 import React, { PureComponent } from 'react';
 import {
   ActivityIndicator,
-  AsyncStorage,
   StatusBar,
   StyleSheet,
   View,
 } from 'react-native';
-
+import { withFirebase, isEmpty } from 'react-redux-firebase';
+import { compose } from 'recompose';
+import { connect } from 'react-redux';
 
 class AuthLoadingScreen extends PureComponent {
   constructor() {
     super();
-    this.bootstrapAsync();
   }
 
-  // Fetch the token from storage then navigate to our appropriate place
-  bootstrapAsync = async () => {
-    const userToken = await AsyncStorage.getItem('userToken');
+  componentWillReceiveProps({auth, navigation}) {
+    if (!isEmpty(auth)) {
+      navigation.navigate('App');
+    }
+    !isEmpty(auth) ? navigation.navigate('App') : navigation.navigate('Auth')
+  }
 
-    // This will switch to the App screen or Auth screen and this loading
-    // screen will be unmounted and thrown away.
-
-    // ***********************************************************
-    // this.props.navigation.navigate(userToken ? 'App' : 'Auth');
-    this.props.navigation.navigate(false ? 'App' : 'Auth');
-    // ***********************************************************
-  };
-
-  // Render any loading content that you like here
   render() {
+    'renderAuthLoading'
     return (
       <View style={styles.container}>
         <ActivityIndicator />
@@ -46,4 +40,13 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AuthLoadingScreen;
+
+const enhance = compose(
+  withFirebase,
+  connect(state => (
+    {
+    auth: state.firebase.auth,
+  })),
+);
+
+export default enhance(AuthLoadingScreen);

@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { View, StyleSheet, Text, Image, SafeAreaView, FlatList, ScrollView, ActivityIndicator,
-  TouchableOpacity, Button,
+  TouchableOpacity, Alert
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +18,7 @@ import { connect } from 'react-redux';
 // picture
 import * as Permissions from 'expo-permissions';
 import * as ImagePicker from 'expo-image-picker';
+import uuid from 'uuid';
 
 class Profil extends PureComponent {
   state = {
@@ -39,7 +40,40 @@ class Profil extends PureComponent {
     });
   }
   
-  onEditProfil = async () => {
+  onEditProfil = ()=> {
+
+    Alert.alert(
+      'Change profile image',
+      '',
+      [
+        {text: 'Open Camera', onPress: () => this.openCamera()},
+        {
+          text: 'Cancel',
+          onPress: () => console.log('Cancel Pressed'),
+          style: 'cancel',
+        },
+        {text: 'Open Library', onPress: () => this.openLibrary()},
+      ],
+      {cancelable: false},
+    );
+  }
+
+  openCamera = async () => {
+    const { status } = await Permissions.askAsync(Permissions.CAMERA);
+    if (status !== 'granted') {
+      Alert.alert('Sorry, we need camera permissions to make this work!');
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+    });
+
+    if (!result.cancelled) {
+      this.upLoadImage(result.uri)
+    }
+  }
+
+  openLibrary = async () => {
     const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
     if (status !== 'granted') {
       Alert.alert('Sorry, we need camera roll permissions to make this work!');
@@ -48,10 +82,36 @@ class Profil extends PureComponent {
     const result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
     });
+
+    if (!result.cancelled) {
+      this.upLoadImage(result.uri)
+    }
+  }
+  
+  upLoadImage = async (uri) => {
+    console.log(uri)
+    const { firebase } = this.props;
+    const blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => {
+        resolve(xhr.response);
+      };
+      xhr.onerror = () => {
+        reject(new TypeError('Network request failed'));
+      };
+      xhr.responseType = 'blob';
+      xhr.open('GET', uri, true);
+      xhr.send(null);
+    });
+
+    const ref = firebase.storage().ref().child(`swipe/${uuid.v4()}`);
+    const snapshot = await ref.put(blob);
+
+    // We're done with the blob, close and release it
+    blob.close();
   }
 
   logout = () => {
-    console.log('log out')
     const { firebase, navigation } = this.props
     firebase.logout()
     navigation.navigate('AuthLoading');
@@ -86,20 +146,22 @@ class Profil extends PureComponent {
                 />
                 <Text style={styles.userName}>{userName}</Text>
               </ View>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={this.onEditProfil}
-                underlayColor='#fff'
-              >
-                <Text style={styles.editText}>...</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.logoutButton}
-                onPress={this.logout}
-                underlayColor='#fff'
-              >
-                <MaterialCommunityIcons name="logout-variant" size={24} color={color.button}/>
-              </TouchableOpacity>
+              <View style={styles.containerEditButton}>
+                <TouchableOpacity
+                  style={styles.logoutButton}
+                  onPress={this.logout}
+                  underlayColor='#fff'
+                >
+                  <MaterialCommunityIcons name="logout-variant" size={24} color={color.button}/>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={this.onEditProfil}
+                  underlayColor='#fff'
+                >
+                  <Text style={styles.editText}>...</Text>
+                </TouchableOpacity>
+              </View>
             </ View>
           </LinearGradient>
 
@@ -169,6 +231,13 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
   },
+  containerEditButton: {
+    flex: 1,
+    width: 20,
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    marginRight: 10,
+  },
   editButton:{
     paddingTop:3,
     paddingBottom:8,
@@ -176,10 +245,7 @@ const styles = StyleSheet.create({
     borderRadius:10,
     borderWidth: 1,
     borderColor: '#fff',
-    marginRight: 20,
-  },
-  logoutButton:{
-    marginRight: 10,
+    marginTop: 20,
   },
   editText:{
       color:'black',

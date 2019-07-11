@@ -23,25 +23,39 @@ import uuid from 'uuid';
 class Profil extends PureComponent {
   state = {
     isLoading: true,
-    imgPathUser: '',
+    avatarPath: '',
   }
 
   componentDidMount() {
-    const { firebase } = this.props
-    const image = firebase.storage().ref().child('appSwipe/avatar.jpg');
-    image.getDownloadURL().then((url) => {
+    const { firebase, profile } = this.props
+    if(isEmpty(profile.avatar)) {
+      const image = firebase.storage().ref().child('appSwipe/avatar.jpg');
+      image.getDownloadURL().then((url) => {
+        this.setState({
+          avatarPath: url,
+          isLoading: false,
+        })
+      })
+      .catch((e)=> {
+        console.log(e)
+      });
+    }
+    else {
       this.setState({
-        imgPathUser: url,
+        avatarPath: profile.avatar,
         isLoading: false,
       })
-    })
-    .catch((e)=> {
-      console.log(e)
-    });
+    }
+  }
+
+  componentDidUpdate() {
+    const { profile } = this.props
+      this.setState({
+        avatarPath: profile.avatar
+      })
   }
   
   onEditProfil = ()=> {
-
     Alert.alert(
       'Change profile image',
       '',
@@ -49,7 +63,7 @@ class Profil extends PureComponent {
         {text: 'Open Camera', onPress: () => this.openCamera()},
         {
           text: 'Cancel',
-          onPress: () => console.log('Cancel Pressed'),
+          onPress: () => {},
           style: 'cancel',
         },
         {text: 'Open Library', onPress: () => this.openLibrary()},
@@ -89,8 +103,7 @@ class Profil extends PureComponent {
   }
   
   upLoadImage = async (uri) => {
-    console.log(uri)
-    const { firebase } = this.props;
+    const { firebase, profile } = this.props;
     const blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.onload = () => {
@@ -103,12 +116,23 @@ class Profil extends PureComponent {
       xhr.open('GET', uri, true);
       xhr.send(null);
     });
-
-    const ref = firebase.storage().ref().child(`swipe/${uuid.v4()}`);
+    // firebase.deleteFile(firebase.profile.avatar)
+    const avatarName = uuid.v4()
+    !isEmpty(profile.avatarName) && firebase.deleteFile(`swipe/${profile.avatarName}`);
+    const ref = firebase.storage().ref().child(`swipe/${avatarName}`);
     const snapshot = await ref.put(blob);
+
 
     // We're done with the blob, close and release it
     blob.close();
+
+    const url = await snapshot.ref.getDownloadURL();
+    if (!isEmpty(url)) {
+      firebase.updateProfile({
+        avatar: url,
+        avatarName: avatarName,
+      });
+    }
   }
 
   logout = () => {
@@ -116,7 +140,6 @@ class Profil extends PureComponent {
     firebase.logout()
     navigation.navigate('AuthLoading');
   }
-
   render() {
     const { navigation, profile } = this.props;
     let userName = profile.username !== '' ? profile.username : 'username'
@@ -141,7 +164,7 @@ class Profil extends PureComponent {
             <View style={styles.headerContainer}>
               <View style={styles.profilContainer}>
                 <Image
-                  source={{ uri: this.state.imgPathUser }}
+                  source={{ uri: this.state.avatarPath }}
                   style={styles.contentImage}
                 />
                 <Text style={styles.userName}>{userName}</Text>

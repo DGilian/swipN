@@ -7,23 +7,14 @@ import color from '../constants/colors';
 import moment from 'moment';
 import { db } from '../firebase/config'
 
+// redux
+import { connect } from 'react-redux'
 
-let addItem = description => {
-  db.ref('/notes').push({
-    description: description,
-    userId: 2,
-    picture: "https://www.am-today.com/sites/default/files/articles/9986/mclaren-p1.jpg",
-    time: moment(Date.now()).format(),
-    totalComments: 0,
-    totalLike: 0,
-    totalComments: 0,
-    totalLike: 0,
-    userName: "jane",
-    userPic: "https://www.dior.com/diormag/sites/default/files/styles/dn_image_slider/public/slideshow_grid/multiple_media/nat1.jpg",
-  });
-};
+// firebase
+import { compose } from 'recompose';
+import { withFirebase } from 'react-redux-firebase'
 
-export default class inputSW extends PureComponent {
+class inputSW extends PureComponent {
   constructor() {
     super();
     this.state = {
@@ -31,12 +22,26 @@ export default class inputSW extends PureComponent {
     };
   }
 
-  
+  addItem = description => {
+
+    const { profile, auth } = this.props
+
+    db.ref('/notes').push({
+      description: description,
+      userId: auth.uid,
+      picture: "https://www.am-today.com/sites/default/files/articles/9986/mclaren-p1.jpg",
+      time: moment(Date.now()).format(),
+      totalComments: 0,
+      totalLike: 0,
+      totalComments: 0,
+      totalLike: 0,
+    });
+  };
 
   publish = () => {
     // publish
     console.log(this.state.content)
-    addItem(this.state.content);
+    this.addItem(this.state.content);
     return this.setState({ content: '' });
   }
 
@@ -91,6 +96,17 @@ export default class inputSW extends PureComponent {
     );
   }
 }
+
+
+const enhance = compose(
+  withFirebase,
+  connect((state) => ({
+      profile: state.firebase.profile,
+      auth: state.firebase.auth
+  })),
+);
+
+export default enhance(inputSW);
 
 const styles = StyleSheet.create({
   addContainer: {

@@ -5,9 +5,12 @@ import Message from '../components/Message';
 import joinMessageUser from '../data/joinMessageUser';
 import color from '../constants/colors';
 
-import { getNotes } from '../firebase/get'
+// firebase
+import { compose } from 'redux';
+import { connect } from 'react-redux';
+import { firebaseConnect, populate, isEmpty, isLoaded} from 'react-redux-firebase';
 
-export default class HomeScreen extends PureComponent {
+class HomeScreen extends PureComponent {
   constructor() {
     super();
     this.state = {
@@ -16,35 +19,42 @@ export default class HomeScreen extends PureComponent {
     };
   }
 
-  async componentDidMount() {
-    const result = await getNotes();
-    this.setState({
-      notes: result,
-      isLoading: false,
-    });
-  }
-
   onSwipeLeft(state) {
     console.log(state)
   }
 
   render() {
-    const { navigation } = this.props;
-    if (this.state.isLoading) {
+    const { navigation, notes} = this.props;
+
+    if (!isLoaded(notes)) {
       return (
         <View style={styles.waiting}>
           <ActivityIndicator />
         </View>
       );
     }
-
+    let notesList = []
+    if(isLoaded(notes)) {
+      Object.keys(notes).map((key, id) => {
+        notesList.push({
+          id: key,
+          userName: notes[key].userId.userName,
+          userPic: notes[key].userId.avatar,
+          description: notes[key].description,
+          time: notes[key].time,
+          totalLike: notes[key].totalLike,
+          totalComments: notes[key].totalComments,
+          messagePic: notes[key].picture,
+        })
+      })
+    }
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
         <ScrollView
           style={{ flex: 1, backgroundColor: '#fff' }}
         >
           <FlatList
-            data={this.state.notes}
+            data={notesList}
             keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => (
               <Message
@@ -66,6 +76,25 @@ export default class HomeScreen extends PureComponent {
     );
   }
 }
+
+const populates = [
+  { child: 'userId', root: 'users' } // replace userId with user object
+]
+
+const enhance = compose(
+  firebaseConnect([
+    // passing populates parameter also creates all necessary child queries
+    { path: 'notes', populates }
+  ]),
+  connect(({ firebase }) => ({
+    // populate original from data within separate paths redux
+    notes: populate(firebase, 'notes', populates),
+    // firebase.ordered.notes or firebase.data.notes for unpopulated notes
+  }))
+);
+
+export default enhance(HomeScreen);
+
 
 const styles = StyleSheet.create({
   container: {

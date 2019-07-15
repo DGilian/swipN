@@ -11,13 +11,6 @@ import { connect } from 'react-redux';
 import { firebaseConnect, populate, isEmpty, isLoaded} from 'react-redux-firebase';
 
 class HomeScreen extends PureComponent {
-  constructor() {
-    super();
-    this.state = {
-      isLoading: true,
-      notes: [],
-    };
-  }
 
   onSwipeLeft(state) {
     console.log(state)

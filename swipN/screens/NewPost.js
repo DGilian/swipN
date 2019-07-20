@@ -2,15 +2,21 @@ import React, { PureComponent } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, TextInput, ActivityIndicator } from 'react-native';
 
 // license MapView : https://github.com/react-native-community/react-native-maps 
-import MapView from 'react-native-maps'
+import MapView, { Marker } from 'react-native-maps'
 import { KeyboardAwareView } from 'react-native-keyboard-aware-view';
+
+// location
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
+import * as TaskManager from 'expo-task-manager';
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 import Icon from 'react-native-vector-icons/Ionicons';
 import color from '../constants/colors';
 import InputSW from '../components/InputSW';
+
+
+const GEOLOCATION_OPTIONS = {timeInterval: 5000, distanceInterval: 1 };
 
 export default class NewPost extends PureComponent {
   state = {
@@ -31,9 +37,12 @@ export default class NewPost extends PureComponent {
       });
     }
 
-    let location = await Location.getCurrentPositionAsync({});
-    this.setState({ location, isLoading: false });
+    Location.watchPositionAsync(GEOLOCATION_OPTIONS, this.updateLocation);
   };
+
+  updateLocation = (newLocation) =>{
+    this.setState({ location: newLocation, isLoading: false });
+  }
 
   render() {
     if (this.state.isLoading) {
@@ -50,14 +59,17 @@ export default class NewPost extends PureComponent {
           <View style={styles.container}>
             <MapView
               style={styles.map}
+              showsUserLocation={true}
+              showsMyLocationButton={true}
               initialRegion={{
               latitude: this.state.location.coords.latitude,
               longitude: this.state.location.coords.longitude,
               latitudeDelta: 0.0922,
               longitudeDelta: 0.0421,
             }}
-            />
-            <InputSW parent="newPost"/>
+            >
+            </ MapView>
+            <InputSW parent="newPost" location={{latitude: this.state.location.coords.latitude, longitude: this.state.location.coords.longitude}}/>
           </View>
         </SafeAreaView>
       </KeyboardAwareView>

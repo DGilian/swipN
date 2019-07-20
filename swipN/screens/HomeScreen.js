@@ -5,10 +5,17 @@ import Message from '../components/Message';
 import joinMessageUser from '../data/joinMessageUser';
 import color from '../constants/colors';
 
+// location
+import * as Location from 'expo-location';
+import * as Permissions from 'expo-permissions';
+
 // firebase
 import { compose } from 'redux';
 import { connect } from 'react-redux';
 import { firebaseConnect, populate, isEmpty, isLoaded} from 'react-redux-firebase';
+
+// geoFire
+import { geoFire } from '../firebase/config'
 
 class HomeScreen extends PureComponent {
 
@@ -16,8 +23,25 @@ class HomeScreen extends PureComponent {
     console.log(state)
   }
 
+  componentDidMount() {
+    this.getLocationAsync()
+  }
+
+  getLocationAsync = async () => {
+    let { status } = await Permissions.askAsync(Permissions.LOCATION);
+    if (status !== 'granted') {
+      this.setState({
+        errorMessage: 'Permission to access location was denied',
+      });
+    }
+
+    let location = await Location.getCurrentPositionAsync({});
+    this.setState({ location, isLoading: false });
+  };
+
   render() {
     const { navigation, notes} = this.props;
+
 
     if (!isLoaded(notes)) {
       return (
@@ -26,6 +50,15 @@ class HomeScreen extends PureComponent {
         </View>
       );
     }
+
+    let geoQuery = geoFire.query({
+      center: [this.state.location.coords.latitude, this.state.location.coords.longitude],
+      radius: 1.609 //kilometers
+    });
+    geoQuery.on("key_entered", function(key, loc, distance) {
+      console.log("Notes" + key + " found at " + loc + " (" + distance + " km away)");
+    });
+
     let notesList = []
     if(isLoaded(notes)) {
       Object.keys(notes).map((key, id) => {
@@ -87,7 +120,6 @@ const enhance = compose(
 );
 
 export default enhance(HomeScreen);
-
 
 const styles = StyleSheet.create({
   container: {

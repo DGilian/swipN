@@ -1,6 +1,7 @@
 import firebase from 'firebase';
 import { createStore, combineReducers } from 'redux'
-import { firebaseReducer } from 'react-redux-firebase'
+import { firebaseReducer } from 'react-redux-firebase';
+import GeoFire from 'geofire';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAntFoolOZqB1pLONF7tYV9Cv9Q_cs3pLI",
@@ -37,6 +38,8 @@ export const rrfProps = {
 let app = firebase.initializeApp(firebaseConfig);
 
 export const db = app.database();
+
+export const geoFire = new GeoFire(app.database().ref('geoFireNotes'));
 
 // exemple export:
 

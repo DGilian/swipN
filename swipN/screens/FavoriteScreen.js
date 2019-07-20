@@ -5,7 +5,6 @@ import joinFavoriteMessageUser from '../data/joinFavoriteMessageUser';
 
 class FavoriteScreen extends PureComponent{
   render() {
-    // console.log(this.props.favoritesNotes)
     const { navigation } = this.props;
     return(
       <View>

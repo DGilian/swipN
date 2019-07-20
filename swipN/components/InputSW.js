@@ -5,7 +5,7 @@ import { SimpleLineIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import color from '../constants/colors';
 import moment from 'moment';
-import { db } from '../firebase/config'
+import { db, geoFire } from '../firebase/config'
 
 // redux
 import { connect } from 'react-redux'
@@ -13,6 +13,7 @@ import { connect } from 'react-redux'
 // firebase
 import { compose } from 'recompose';
 import { withFirebase } from 'react-redux-firebase'
+import uuid from 'uuid';
 
 class inputSW extends PureComponent {
   constructor() {
@@ -24,9 +25,10 @@ class inputSW extends PureComponent {
 
   addItem = description => {
 
-    const { profile, auth } = this.props
+    const { profile, auth, location} = this.props
+    const keyNotes = uuid.v4()
 
-    db.ref('/notes').push({
+    db.ref('/notes/'+keyNotes).set({
       description: description,
       userId: auth.uid,
       picture: "https://www.am-today.com/sites/default/files/articles/9986/mclaren-p1.jpg",
@@ -36,11 +38,17 @@ class inputSW extends PureComponent {
       totalComments: 0,
       totalLike: 0,
     });
+
+    geoFire.set(keyNotes, [location.latitude, location.longitude]).then(function() {
+      console.log("Provided key has been added to GeoFire");
+    }, function(error) {
+      console.log("Error: " + error);
+    });
+
   };
 
   publish = () => {
     // publish
-    console.log(this.state.content)
     this.addItem(this.state.content);
     return this.setState({ content: '' });
   }

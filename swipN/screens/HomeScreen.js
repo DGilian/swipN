@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { View, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, ScrollView } from 'react-native';
+import { View, StyleSheet, FlatList, SafeAreaView, ActivityIndicator, ScrollView, Text } from 'react-native';
 import Message from '../components/Message';
 
 import joinMessageUser from '../data/joinMessageUser';
@@ -8,6 +8,7 @@ import color from '../constants/colors';
 // location
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
+import { GEOLOCATION_OPTIONS } from '../constants/geolocation'
 
 // firebase
 import { compose } from 'redux';
@@ -18,6 +19,12 @@ import { firebaseConnect, populate, isEmpty, isLoaded} from 'react-redux-firebas
 import { geoFire } from '../firebase/config'
 
 class HomeScreen extends PureComponent {
+
+  state = {
+    location: null,
+    errorMessage: null,
+    isLoading: true,
+  };
 
   onSwipeLeft(state) {
     console.log(state)
@@ -35,15 +42,18 @@ class HomeScreen extends PureComponent {
       });
     }
 
-    let location = await Location.getCurrentPositionAsync({});
-    this.setState({ location, isLoading: false });
+    Location.watchPositionAsync(GEOLOCATION_OPTIONS, this.updateLocation);
   };
+
+  updateLocation = (newLocation) =>{
+    console.log('update location')
+    this.setState({ location: newLocation, isLoading: false});
+  }
 
   render() {
     const { navigation, notes} = this.props;
 
-
-    if (!isLoaded(notes)) {
+    if (!isLoaded(notes) || this.state.isLoading) {
       return (
         <View style={styles.waiting}>
           <ActivityIndicator />
@@ -55,11 +65,14 @@ class HomeScreen extends PureComponent {
       center: [this.state.location.coords.latitude, this.state.location.coords.longitude],
       radius: 1.609 //kilometers
     });
+
+    const results = [];
     geoQuery.on("key_entered", function(key, loc, distance) {
       console.log("Notes" + key + " found at " + loc + " (" + distance + " km away)");
     });
 
     let notesList = []
+
     if(isLoaded(notes)) {
       Object.keys(notes).map((key, id) => {
         notesList.push({
@@ -74,11 +87,13 @@ class HomeScreen extends PureComponent {
         })
       })
     }
+
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
         <ScrollView
           style={{ flex: 1, backgroundColor: '#fff' }}
         >
+          <Text>{`${this.state.location.coords.latitude} ${this.state.location.coords.longitude}`}</Text>
           <FlatList
             data={notesList}
             keyExtractor={item => item.id.toString()}

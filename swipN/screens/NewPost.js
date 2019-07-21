@@ -2,21 +2,19 @@ import React, { PureComponent } from 'react';
 import { View, StyleSheet, SafeAreaView, Text, TextInput, ActivityIndicator } from 'react-native';
 
 // license MapView : https://github.com/react-native-community/react-native-maps 
-import MapView, { Marker } from 'react-native-maps'
+import MapView from 'react-native-maps'
 import { KeyboardAwareView } from 'react-native-keyboard-aware-view';
 
 // location
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
-import * as TaskManager from 'expo-task-manager';
+
+import { GEOLOCATION_OPTIONS } from '../constants/geolocation';
 
 // eslint-disable-next-line import/no-extraneous-dependencies
 import Icon from 'react-native-vector-icons/Ionicons';
 import color from '../constants/colors';
 import InputSW from '../components/InputSW';
-
-
-const GEOLOCATION_OPTIONS = {timeInterval: 5000, distanceInterval: 1 };
 
 export default class NewPost extends PureComponent {
   state = {

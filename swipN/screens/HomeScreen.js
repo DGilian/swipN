@@ -5,6 +5,8 @@ import Message from '../components/Message';
 import joinMessageUser from '../data/joinMessageUser';
 import color from '../constants/colors';
 
+import { getNote } from '../firebase/get';
+
 // location
 import * as Location from 'expo-location';
 import * as Permissions from 'expo-permissions';
@@ -26,13 +28,10 @@ class HomeScreen extends PureComponent {
     isLoading: true,
   };
 
-  onSwipeLeft(state) {
-    console.log(state)
-  }
-
   componentDidMount() {
     this.getLocationAsync()
   }
+
 
   getLocationAsync = async () => {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
@@ -43,14 +42,15 @@ class HomeScreen extends PureComponent {
     }
 
     Location.watchPositionAsync(GEOLOCATION_OPTIONS, this.updateLocation);
+
   };
 
   updateLocation = (newLocation) =>{
-    console.log('update location')
     this.setState({ location: newLocation, isLoading: false});
   }
 
   render() {
+    console.log('render')
     const { navigation, notes} = this.props;
 
     if (!isLoaded(notes) || this.state.isLoading) {
@@ -60,17 +60,19 @@ class HomeScreen extends PureComponent {
         </View>
       );
     }
+    
 
     let geoQuery = geoFire.query({
       center: [this.state.location.coords.latitude, this.state.location.coords.longitude],
       radius: 1.609 //kilometers
     });
 
-    const results = [];
+    let testee = []
     geoQuery.on("key_entered", function(key, loc, distance) {
-      console.log("Notes" + key + " found at " + loc + " (" + distance + " km away)");
+      console.log('key', key);
+      testee.push(key)
     });
-
+    console.log(testee)
     let notesList = []
 
     if(isLoaded(notes)) {

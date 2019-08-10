@@ -18,3 +18,11 @@ export const getNotes = () => {
   });
   return notes;
 }
+
+export const getNote = async (id) => {
+  const notes = await db.ref(`notes/${id}`).once('value').then((snapshot) => {
+      return snapshot;
+  });
+  return notes;
+}
+

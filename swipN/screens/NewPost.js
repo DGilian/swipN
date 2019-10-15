@@ -16,6 +16,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import color from '../constants/colors';
 import InputSW from '../components/InputSW';
 
+
 export default class NewPost extends PureComponent {
   state = {
     location: null,
@@ -43,6 +44,7 @@ export default class NewPost extends PureComponent {
   }
 
   render() {
+    const { navigation } = this.props
     if (this.state.isLoading) {
       return (
         <View style={styles.waiting}>
@@ -55,6 +57,7 @@ export default class NewPost extends PureComponent {
       <KeyboardAwareView >
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
           <View style={styles.container}>
+            <Text>hello</Text>
             <MapView
               style={styles.map}
               showsUserLocation={true}
@@ -67,7 +70,11 @@ export default class NewPost extends PureComponent {
             }}
             >
             </ MapView>
-            <InputSW parent="newPost" location={{latitude: this.state.location.coords.latitude, longitude: this.state.location.coords.longitude}}/>
+            <InputSW
+              parent="newPost"
+              location={{latitude: this.state.location.coords.latitude, longitude: this.state.location.coords.longitude}}
+              navigation={navigation}
+            />
           </View>
         </SafeAreaView>
       </KeyboardAwareView>

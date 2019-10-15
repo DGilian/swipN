@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import propTypes from 'prop-types';
-import { View, Image, TextInput, Button, StyleSheet } from 'react-native';
+import { View, Image, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { SimpleLineIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import color from '../constants/colors';
@@ -50,7 +50,35 @@ class inputSW extends PureComponent {
   publish = () => {
     // publish
     this.addItem(this.state.content);
-    return this.setState({ content: '' });
+    this.setState({ content: '' });
+    this.props.navigation.navigate('Home')
+  }
+
+  // cam
+
+  onAddImage = ()=> {
+    Alert.alert(
+      'Add Picture',
+      '',
+      [
+        {text: 'Open Camera', onPress: () => this.openCamera()},
+        {
+          text: 'Cancel',
+          onPress: () => {},
+          style: 'cancel',
+        },
+        {text: 'Open Library', onPress: () => this.openLibrary()},
+      ],
+      {cancelable: false},
+    );
+  }
+
+  openCamera = ()=> {
+    console.log('openCamera')
+  }
+  
+  openLibrary = ()=> {
+    console.log('openLibrary')
   }
 
   render() {
@@ -78,6 +106,7 @@ class inputSW extends PureComponent {
                 color={color.colorIcon}
                 onPress={() => {}}
                 style={styles.iconPicture}
+                onPress={()=> this.onAddImage()}
               />
             </View>
           </View>

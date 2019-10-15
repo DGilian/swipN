@@ -5,7 +5,8 @@ import Message from '../components/Message';
 import joinMessageUser from '../data/joinMessageUser';
 import color from '../constants/colors';
 
-import { getNote } from '../firebase/get';
+import { getNote, getUser} from '../firebase/get';
+
 
 // location
 import * as Location from 'expo-location';
@@ -22,16 +23,27 @@ import { geoFire } from '../firebase/config'
 
 class HomeScreen extends PureComponent {
 
-  state = {
-    location: null,
-    errorMessage: null,
-    isLoading: true,
-  };
-
-  componentDidMount() {
-    this.getLocationAsync()
+  constructor(props) {
+    super(props);
+    this.state = {
+      location: null,
+      errorMessage: null,
+      isLoading: true,
+      idNotesAround: [],
+      dataNotesAround: [],
+    };
   }
 
+  componentDidMount() {
+    const {navigation} = this.props;
+
+    // when navigate on this page
+    navigation.addListener ('willFocus', () =>
+      this.getLocationAsync().then(()=> {
+        this.getAroundNotes()
+      })
+    );
+  }
 
   getLocationAsync = async () => {
     let { status } = await Permissions.askAsync(Permissions.LOCATION);
@@ -40,54 +52,66 @@ class HomeScreen extends PureComponent {
         errorMessage: 'Permission to access location was denied',
       });
     }
-
-    Location.watchPositionAsync(GEOLOCATION_OPTIONS, this.updateLocation);
-
+    let location = await Location.getCurrentPositionAsync({});
+    this.getAroundNotes(location);
   };
 
-  updateLocation = (newLocation) =>{
-    this.setState({ location: newLocation, isLoading: false});
+
+  getAroundNotes = (location) => {
+    let geoQuery = geoFire.query({
+      center: [location.coords.latitude, location.coords.longitude],
+      radius: 1 //kilometers
+    });
+
+    let listId = []
+    geoQuery.on("key_entered", function(key, loc, distance) {
+      listId.push(key)
+    });
+
+    geoQuery.on("ready", () => {
+      if(listId.length !== this.state.dataNotesAround.length) {
+        this.setState({ 
+          dataNotesAround: []
+        })
+        this.fetchDataNotesAround(listId)
+        this.setState({ idNotesAround: listId })
+      }
+    })
+  }
+
+  fetchDataNotesAround = (idList) => {
+      idList.map((noteId)=> {
+      getNote(noteId).then((dataNote) => {
+        let note = {
+          id: dataNote.key,
+          description: dataNote.val().description,
+          time: dataNote.val().time,
+          totalLike: dataNote.val().totalLike,
+          totalComments: dataNote.val().totalComments,
+          messagePic: dataNote.val().picture,
+        }
+        getUser(dataNote.val().userId).then((dataUser) => {
+          note.userName = dataUser.val().username;
+          note.userPic = dataUser.val().avatar,
+          this.setState({ dataNotesAround: [...this.state.dataNotesAround, note]})
+        })
+      }
+      )
+    })
+    if (this.state.idNotesAround.length === this.state.dataNotesAround.length) {
+      this.setState({isLoading: false})
+    } 
   }
 
   render() {
-    console.log('render')
-    const { navigation, notes} = this.props;
+    const { navigation } = this.props;
 
-    if (!isLoaded(notes) || this.state.isLoading) {
+    if (this.state.isLoading) { // !isLoaded(notes) || 
       return (
         <View style={styles.waiting}>
           <ActivityIndicator />
         </View>
       );
-    }
-    
-
-    let geoQuery = geoFire.query({
-      center: [this.state.location.coords.latitude, this.state.location.coords.longitude],
-      radius: 1.609 //kilometers
-    });
-
-    let testee = []
-    geoQuery.on("key_entered", function(key, loc, distance) {
-      console.log('key', key);
-      testee.push(key)
-    });
-    console.log(testee)
-    let notesList = []
-
-    if(isLoaded(notes)) {
-      Object.keys(notes).map((key, id) => {
-        notesList.push({
-          id: key,
-          userName: notes[key].userId.userName,
-          userPic: notes[key].userId.avatar,
-          description: notes[key].description,
-          time: notes[key].time,
-          totalLike: notes[key].totalLike,
-          totalComments: notes[key].totalComments,
-          messagePic: notes[key].picture,
-        })
-      })
     }
 
     return (
@@ -95,9 +119,8 @@ class HomeScreen extends PureComponent {
         <ScrollView
           style={{ flex: 1, backgroundColor: '#fff' }}
         >
-          <Text>{`${this.state.location.coords.latitude} ${this.state.location.coords.longitude}`}</Text>
           <FlatList
-            data={notesList}
+            data={this.state.dataNotesAround} // notesList
             keyExtractor={item => item.id.toString()}
             renderItem={({ item }) => (
               <Message
@@ -120,23 +143,23 @@ class HomeScreen extends PureComponent {
   }
 }
 
-const populates = [
-  { child: 'userId', root: 'users' } // replace userId with user object
-]
+// const populates = [
+//   { child: 'userId', root: 'users' } // replace userId with user object
+// ]
 
-const enhance = compose(
-  firebaseConnect([
-    // passing populates parameter also creates all necessary child queries
-    { path: 'notes', populates }
-  ]),
-  connect(({ firebase }) => ({
-    // populate original from data within separate paths redux
-    notes: populate(firebase, 'notes', populates),
-    // firebase.ordered.notes or firebase.data.notes for unpopulated notes
-  }))
-);
+// const enhance = compose(
+//   firebaseConnect([
+//     // passing populates parameter also creates all necessary child queries
+//     { path: 'notes', populates }
+//   ]),
+//   connect(({ firebase }) => ({
+//     // populate original from data within separate paths redux
+//     notes: populate(firebase, 'notes', populates),
+//     // firebase.ordered.notes or firebase.data.notes for unpopulated notes
+//   }))
+// );
 
-export default enhance(HomeScreen);
+export default HomeScreen;
 
 const styles = StyleSheet.create({
   container: {

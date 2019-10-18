@@ -92,7 +92,8 @@ class HomeScreen extends PureComponent {
         }
         getUser(dataNote.val().userId).then((dataUser) => {
           note.userName = dataUser.val().username;
-          note.userPic = dataUser.val().avatar,
+          note.userPic = dataUser.val().avatar;
+
           this.setState({ dataNotesAround: [...this.state.dataNotesAround, note]})
         })
       }
@@ -113,7 +114,6 @@ class HomeScreen extends PureComponent {
         </View>
       );
     }
-
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
         <ScrollView
@@ -132,7 +132,7 @@ class HomeScreen extends PureComponent {
                 time={item.time}
                 totalLike={item.totalLike}
                 totalComments={item.totalComments}
-                messagePic={item.picture}
+                messagePic={item.messagePic}
                 screen="home"
               />)
             }

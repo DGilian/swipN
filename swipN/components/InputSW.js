@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import propTypes from 'prop-types';
-import { View, Image, TextInput, Button, StyleSheet, Alert } from 'react-native';
+import { View, Image, TextInput, Button, StyleSheet, Alert, ActivityIndicator} from 'react-native';
 import { SimpleLineIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import color from '../constants/colors';
@@ -15,23 +15,30 @@ import { compose } from 'recompose';
 import { withFirebase } from 'react-redux-firebase'
 import uuid from 'uuid';
 
+// add pic when post message
+import * as Permissions from 'expo-permissions';
+import * as ImagePicker from 'expo-image-picker';
+
+
 class inputSW extends PureComponent {
   constructor() {
     super();
     this.state = {
       content: '',
+      picUrl: '',
+      phonePathPic:'',
+      isUploadingPic: false,
     };
   }
 
-  addItem = description => {
-
-    const { profile, auth, location} = this.props
+  addItem = (description, picUrl) => {
+    const { auth, location} = this.props
     const keyNotes = uuid.v4()
 
     db.ref('/notes/'+keyNotes).set({
       description: description,
       userId: auth.uid,
-      picture: "https://www.am-today.com/sites/default/files/articles/9986/mclaren-p1.jpg",
+      picture: picUrl,
       time: moment(Date.now()).format(),
       totalComments: 0,
       totalLike: 0,
@@ -49,13 +56,15 @@ class inputSW extends PureComponent {
 
   publish = () => {
     // publish
-    this.addItem(this.state.content);
-    this.setState({ content: '' });
-    this.props.navigation.navigate('Home')
+    this.setState({isUploadingPic: true})
+    this.upLoadImage(this.state.phonePathPic).then(()=> {
+      this.addItem(this.state.content, this.state.picUrl);
+      this.setState({ content: '' });
+      this.props.navigation.navigate('Home')
+    })
   }
 
-  // cam
-
+  // cam add picture when post message ======
   onAddImage = ()=> {
     Alert.alert(
       'Add Picture',
@@ -73,13 +82,65 @@ class inputSW extends PureComponent {
     );
   }
 
-  openCamera = ()=> {
-    console.log('openCamera')
+  openCamera = async () => {
+    const { status } = await Permissions.askAsync(Permissions.CAMERA);
+    if (status !== 'granted') {
+      Alert.alert('Sorry, we need camera permissions to make this work!');
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+    });
+
+    if (!result.cancelled) {
+      // this.upLoadImage(result.uri)
+      this.setState({phonePathPic: result.uri})
+    }
   }
   
-  openLibrary = ()=> {
-    console.log('openLibrary')
+  openLibrary = async () => {
+    const { status } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+    if (status !== 'granted') {
+      Alert.alert('Sorry, we need camera roll permissions to make this work!');
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+    });
+
+    if (!result.cancelled) {
+      // this.upLoadImage(result.uri)
+
+      this.setState({phonePathPic: result.uri})
+    }
   }
+
+  upLoadImage = async (uri) => {
+    const { firebase } = this.props;
+    const blob = await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.onload = () => {
+        resolve(xhr.response);
+      };
+      xhr.onerror = () => {
+        reject(new TypeError('Network request failed'));
+      };
+      xhr.responseType = 'blob';
+      xhr.open('GET', uri, true);
+      xhr.send(null);
+    });
+    // add picture in firebase
+    const picName = uuid.v4()
+    const ref = firebase.storage().ref().child(`swipe/${picName}`);
+    const snapshot = await ref.put(blob);
+    const url = await snapshot.ref.getDownloadURL().then((urlPic)=>{this.setState({picUrl: urlPic})});
+
+
+    // We're done with the blob, close and release it
+    blob.close();
+
+  }
+// end of add image cam when post message ===========
 
   render() {
     const { userPic, parent } = this.props;
@@ -121,14 +182,21 @@ class inputSW extends PureComponent {
             value={this.state.content}
           />
         </View>
-        <View style={styles.buttonContainer}>
-          <MaterialCommunityIcons
-            name="send"
-            size={28}
-            color={color.colorIcon}
-            onPress={() => this.publish()}
-          />
-        </View>
+        {this.state.isUploadingPic ? (
+          <View style={styles.waiting}>
+            <ActivityIndicator />
+          </View>
+        )
+        :
+          <View style={styles.buttonContainer}>
+            <MaterialCommunityIcons
+              name="send"
+              size={28}
+              color={color.colorIcon}
+              onPress={() => this.publish()}
+            />
+          </View>
+        }
       </View>
     );
   }

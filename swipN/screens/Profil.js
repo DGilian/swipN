@@ -31,6 +31,7 @@ class Profil extends PureComponent {
     if(isEmpty(profile.avatar)) {
       const image = firebase.storage().ref().child('appSwipe/avatar.jpg');
       image.getDownloadURL().then((url) => {
+        console.log('url path pic', url)
         this.setState({
           avatarPath: url,
           isLoading: false,
@@ -140,6 +141,7 @@ class Profil extends PureComponent {
     firebase.logout()
     navigation.navigate('AuthLoading');
   }
+
   render() {
     const { navigation, profile } = this.props;
     let userName = profile.username !== '' ? profile.username : 'username'

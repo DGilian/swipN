@@ -59,8 +59,8 @@ class inputSW extends PureComponent {
     this.setState({isUploadingPic: true})
     this.upLoadImage(this.state.phonePathPic).then(()=> {
       this.addItem(this.state.content, this.state.picUrl);
-      this.setState({ content: '' });
       this.props.navigation.navigate('Home')
+      this.setState({isUploadingPic: false, content: '' })
     })
   }
 

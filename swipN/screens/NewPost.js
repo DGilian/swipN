@@ -57,7 +57,6 @@ export default class NewPost extends PureComponent {
       <KeyboardAwareView >
         <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
           <View style={styles.container}>
-            <Text>hello</Text>
             <MapView
               style={styles.map}
               showsUserLocation={true}

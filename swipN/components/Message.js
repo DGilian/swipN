@@ -7,13 +7,31 @@ import { isEmptyH } from '../helpers/helpers';
 
 import color from '../constants/colors';
 
+// redux
+import { withFirebase } from 'react-redux-firebase';
+import {connect} from 'react-redux'
+import {compose} from 'recompose'
+
+// set api
+import { setLike } from '../firebase/set'
+
 class Message extends PureComponent {
   constructor(props) {
     super(props);
     this.state = {
       isLike: false,
       isFavorite: false,
+      likes: 0,
     };
+  }
+
+  componentDidMount =()=> {
+    console.log('auth', this.props.auth.uid)
+    console.log('totallikkkkie', this.props.totalLike)
+    this.setState({likes: this.props.totalLike.length})
+    if(this.props.totalLike.includes(this.props.auth.uid)){
+      this.setState({isLike: true})
+    }
   }
 
 
@@ -26,11 +44,24 @@ class Message extends PureComponent {
     // this.setState(prevState => ({ isFavorite: !prevState.isFavorite }))
   }
 
+  setIsLike(noteId, currentUserId) {
+    setLike(noteId, currentUserId)
+    if(this.state.isLike) {
+      this.setState({ isLike: false, likes: this.state.likes -1})
+    }
+    else {
+      this.setState({ isLike: true, likes: this.state.likes +1})
+    }
+  }
+
   render() {
     const { navigate } = this.props.navigation;
     const { id, description, userName, time, totalLike, totalComments, userPic, messagePic, screen } = this.props;
+    
+    // redux
+    const { auth } = this.props
 
-    return (
+    return ( 
       <View style={styles.container}>
         <View style={styles.head}>
           <TouchableOpacity
@@ -61,14 +92,14 @@ class Message extends PureComponent {
           }
         </View>
         <View style={styles.commandContainer}>
-          <TouchableOpacity onPress={() => this.setState(prevState => ({ isLike: !prevState.isLike }))}>
+          <TouchableOpacity onPress={() => this.setIsLike(id ,auth.uid)}>
             <View style={styles.command}>
               {this.state.isLike === false
                 ? <Ionicons name="ios-heart-empty" size={24} color={color.postIcon} />
                 : <Ionicons name="ios-heart" size={24} color={color.likeIcon} />
               }
               <Text style={styles.nbLike}>
-                {this.state.isLike ? totalLike + 1 : totalLike}
+                {this.state.likes}
               </Text>
             </View>
           </TouchableOpacity>
@@ -82,7 +113,7 @@ class Message extends PureComponent {
                 color={color.postIcon}
               />
               <Text style={styles.nbLike}>
-                {totalComments}
+                {totalComments.length}
               </Text>
             </View>
           </TouchableOpacity>
@@ -123,14 +154,22 @@ class Message extends PureComponent {
   }
 }
 
-const mapStateToProps = (state) => {
-  return {
-    // on recupere que les favories plutot que tout le state
-    favoritesNotes : state.favoritesNotes
-  }
-}
+// const mapStateToProps = (state) => {
+//   return {
+//     // on recupere que les favories plutot que tout le state
+//     favoritesNotes : state.favoritesNotes
+//   }
+// }
 
-export default Message
+const enhance = compose(
+  withFirebase,
+  connect((state) => ({
+      profile: state.firebase.profile,
+      auth: state.firebase.auth
+  })),
+);
+
+export default enhance(Message) 
 
 const styles = StyleSheet.create({
   container: {
@@ -215,8 +254,8 @@ Message.propTypes = ({
   description: propTypes.string,
   userName: propTypes.string,
   time: propTypes.string,
-  totalLike: propTypes.number,
-  totalComments: propTypes.number,
+  totalLike: propTypes.array,
+  totalComments: propTypes.array,
   userPic: propTypes.string,
   messagePic: propTypes.string,
   screen: propTypes.string,
@@ -227,8 +266,8 @@ Message.defaultProps = ({
   description: '',
   userName: '',
   time: '',
-  totalLike: 0,
-  totalComments: 0,
+  totalLike: [],
+  totalComments: [],
   userPic: '',
   messagePic: '',
   screen: '',

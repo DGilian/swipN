@@ -40,10 +40,8 @@ class inputSW extends PureComponent {
       userId: auth.uid,
       picture: picUrl,
       time: moment(Date.now()).format(),
-      totalComments: 0,
-      totalLike: 0,
-      totalComments: 0,
-      totalLike: 0,
+      totalComments: [],
+      totalLike: [],
     });
 
     geoFire.set(keyNotes, [location.latitude, location.longitude]).then(function() {

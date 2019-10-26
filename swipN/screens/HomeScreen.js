@@ -80,6 +80,7 @@ class HomeScreen extends PureComponent {
   }
 
   fetchDataNotesAround = (idList) => {
+      console.log('fetchh')
       idList.map((noteId)=> {
       getNote(noteId).then((dataNote) => {
         let note = {
@@ -105,6 +106,7 @@ class HomeScreen extends PureComponent {
   }
 
   render() {
+    console.log('=====render==')
     const { navigation } = this.props;
 
     if (this.state.isLoading) { // !isLoaded(notes) || 

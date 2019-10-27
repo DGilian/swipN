@@ -28,10 +28,10 @@ class Profil extends PureComponent {
 
   componentDidMount() {
     const { firebase, profile } = this.props
+    console.log('isEmpty', isEmpty(profile.avatar))
     if(isEmpty(profile.avatar)) {
       const image = firebase.storage().ref().child('appSwipe/avatar.jpg');
       image.getDownloadURL().then((url) => {
-        console.log('url path pic', url)
         this.setState({
           avatarPath: url,
           isLoading: false,
@@ -51,9 +51,12 @@ class Profil extends PureComponent {
 
   componentDidUpdate() {
     const { profile } = this.props
+    console.log('avatar profil', profile.avatar)
+    if(!isEmpty(profile.avatar)){
       this.setState({
         avatarPath: profile.avatar
       })
+    }
   }
   
   onEditProfil = ()=> {
@@ -153,7 +156,7 @@ class Profil extends PureComponent {
         </View>
       );
     }
-
+    console.log('avatar statePath', this.state.avatarPath)
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
         <ScrollView style={styles.container}>

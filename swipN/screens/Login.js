@@ -42,7 +42,10 @@ class Login extends Component {
     const { firebase } = this.props
     firebase.createUser(
       { email: this.state.email , password: this.state.password},
-      { username: this.state.username, email: this.state.email, avatar: 'https://firebasestor...8-b92e-0027b312ff38'},
+      { username: this.state.username,
+        email: this.state.email,
+        avatar: 'https://firebasestorage.googleapis.com/v0/b/swip-6e8e4.appspot.com/o/appSwipe%2Favatar.jpg?alt=media&token=f4019845-2da7-4528-95d9-aae45e42c1d7'
+      },
     ).then((e)=> {
       this.setState({
         email: '',

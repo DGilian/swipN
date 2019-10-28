@@ -34,7 +34,7 @@ class inputSW extends PureComponent {
   addItem = (description, picUrl) => {
     const { auth, location} = this.props
     const keyNotes = uuid.v4()
-
+    console.log('picUrl', picUrl)
     db.ref('/notes/'+keyNotes).set({
       description: description,
       userId: auth.uid,
@@ -55,11 +55,19 @@ class inputSW extends PureComponent {
   publish = () => {
     // publish
     this.setState({isUploadingPic: true})
-    this.upLoadImage(this.state.phonePathPic).then(()=> {
+
+    if(this.state.phonePathPic !== '') {
+      this.upLoadImage(this.state.phonePathPic).then(()=> {
+        this.addItem(this.state.content, this.state.picUrl);
+        this.props.navigation.navigate('Home')
+        this.setState({isUploadingPic: false, content: '', phonePathPic: '', picUrl: '' })
+      })
+    }
+    else {
       this.addItem(this.state.content, this.state.picUrl);
-      this.props.navigation.navigate('Home')
-      this.setState({isUploadingPic: false, content: '' })
-    })
+        this.props.navigation.navigate('Home')
+        this.setState({isUploadingPic: false, content: '', phonePathPic: '', picUrl: '' })
+    }
   }
 
   // cam add picture when post message ======

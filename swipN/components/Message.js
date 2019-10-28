@@ -28,7 +28,7 @@ class Message extends PureComponent {
   componentDidMount =()=> {
     console.log('didMoung message')
     this.setState({likes: this.props.totalLike.length})
-    if(this.props.totalLike.includes(this.props.auth.uid)){
+    if(this.props.totalLike && this.props.totalLike.includes(this.props.auth.uid)){
       this.setState({isLike: true})
     }
   }
@@ -54,7 +54,6 @@ class Message extends PureComponent {
   }
 
   render() {
-    console.log('render message')
     const { navigate } = this.props.navigation;
     const { id, description, userName, time, totalComments, userPic, messagePic, screen } = this.props;
     
